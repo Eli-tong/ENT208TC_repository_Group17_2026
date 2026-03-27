@@ -1,5 +1,6 @@
 # ENT208TC_repository_Group17_2026
 # group 17
+# project name:Horma-Pet
 # all members' information:
 # Wei He (lD:2257563)
 # Zhitong Li (lD: 2255087)
