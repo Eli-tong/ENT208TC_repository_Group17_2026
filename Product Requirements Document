@@ -1,0 +1,79 @@
+Product Requirements Document — Horma-Pet 
+
+1. User Stories 
+
+As a female student, I want to quickly log my daily actions (food/workout), so that I can track habits without effort.  
+
+As a user in a low-energy phase, I want reminders of suitable actions, so that I can improve my condition.  
+
+As a user, I want to see my pet’s condition change, so that I feel emotionally engaged and motivated.  
+
+As a user, I want the system to reflect my hormone cycle automatically, so that I don’t need complex tracking.  
+
+As a user, I want to view my recent behavior trends, so that I understand my habits.  
+
+As a user, I want simple and intuitive interactions, so that I can use the app without learning effort.  
+
+ 
+
+2. Feature List (Mapped to User Stories) 
+
+Simple Daily Input (Stories 1, 6)  
+
+One-tap logging: anti-inflammatory food / targeted workout  
+
+Cycle Synchronization Engine (Stories 2, 4)  
+
+Predefined cycle phases  
+
+Default pet energy mapped to cycle phase  
+
+Targeted Recommendations (Story 2)  
+
+Suggest actions during low-energy phases  
+
+Dynamic Pet Visualization (Story 3)  
+
+Pet states: energetic / normal / tired / sick  
+
+Real-time feedback based on inputs  
+
+Trend Panel (Story 5)  
+
+7-day summary of actions and pet state  
+
+ 
+
+3. Initial Technical Architecture 
+
+Front-End  
+
+Mobile-first app (React Native or Flutter)  
+
+Simple UI: buttons, icons, pet animation, trend chart  
+
+Back-End  
+
+Lightweight server (Node.js / Firebase Functions)  
+
+Logic handling:  
+
+Cycle phase mapping  
+
+Energy scoring system  
+
+Recommendation triggers  
+
+Data Storage  
+
+Cloud database (Firebase / NoSQL)  
+
+Store:  
+
+User profile (cycle phase, preferences)  
+
+Daily logs (food/workout)  
+
+Pet state history (for trends) 
+
+ 
