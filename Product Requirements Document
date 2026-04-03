@@ -2,15 +2,15 @@ Product Requirements Document — Horma-Pet
 
 1. User Stories 
 
-As a female student, I want to quickly log my daily actions (food/workout), so that I can track habits without effort.  
+As a female student, I want to quickly log my daily actions (food/workout), so that I can track supportive habits with minimal effort. 
 
 As a user in a low-energy phase, I want reminders of suitable actions, so that I can improve my condition.  
 
-As a user, I want to see my pet’s condition change, so that I feel emotionally engaged and motivated.  
+As a user, I want to see my pet’s condition change based on my actions, so that I feel emotionally engaged and motivated to continue healthy habits. 
 
 As a user, I want the system to reflect my hormone cycle automatically, so that I don’t need complex tracking.  
 
-As a user, I want to view my recent behavior trends, so that I understand my habits.  
+As a user, I want to view my recent behavior trends, so that I can better understand the relationship between my actions and my pet’s condition. 
 
 As a user, I want simple and intuitive interactions, so that I can use the app without learning effort.  
 
@@ -28,15 +28,21 @@ Predefined cycle phases
 
 Default pet energy mapped to cycle phase  
 
+Minimize the need for complex biological data entry 
+
 Targeted Recommendations (Story 2)  
 
 Suggest actions during low-energy phases  
+
+Focus on simple and manageable actions for users 
 
 Dynamic Pet Visualization (Story 3)  
 
 Pet states: energetic / normal / tired / sick  
 
-Real-time feedback based on inputs  
+Real-time feedback based on logged actions 
+
+Pet condition reflects the useer’s self-care consistency 
 
 Trend Panel (Story 5)  
 
@@ -75,5 +81,8 @@ User profile (cycle phase, preferences)
 Daily logs (food/workout)  
 
 Pet state history (for trends) 
+
+ 
+ 
 
  
