@@ -1,0 +1,87 @@
+import os, sys, io
+import M5
+from M5 import *
+from hardware import Pin, I2C
+from unit import ENVUnit
+import time
+
+# 全局句柄声明
+env3_0 = None
+last_state = "INIT"
+
+# UI 句柄声明
+lbl_title = None
+lbl_temp = None
+lbl_hum = None
+lbl_alert = None
+
+def setup():
+    global env3_0, lbl_title, lbl_temp, lbl_hum, lbl_alert
+    
+    M5.begin()
+    # 启用横屏模式 (1 = Landscape)
+    Widgets.setRotation(1) 
+    Widgets.fillScreen(0x000000)
+    
+    # I2C 纯净初始化 (仅连接 ENV III 至底层 Port A)
+    i2c0 = I2C(0, scl=Pin(33), sda=Pin(32), freq=100000)
+    env3_0 = ENVUnit(i2c=i2c0, type=3)
+    
+    # 构建高密度排版 UI (移除冗余修饰，确保总线稳定)
+    lbl_title = Widgets.Label("ELDERCARE HEAT ALARM", 5, 5, 1.0, 0xAAAAAA, 0x000000, Widgets.FONTS.DejaVu12)
+    
+    lbl_temp = Widgets.Label("Temp: --.- C", 5, 30, 1.0, 0xFFFFFF, 0x000000, Widgets.FONTS.DejaVu18)
+    lbl_hum = Widgets.Label("Hum: --.- %", 130, 30, 1.0, 0xFFFFFF, 0x000000, Widgets.FONTS.DejaVu18)
+    
+    # 警报提示符位置下移，字体放大，确保视觉冲击力
+    lbl_alert = Widgets.Label("SYS: MONITORING", 5, 75, 1.0, 0x00FF00, 0x000000, Widgets.FONTS.DejaVu18)
+
+def loop():
+    global env3_0, last_state
+    global lbl_temp, lbl_hum, lbl_alert
+    M5.update()
+    
+    try:
+        # 实时数据采样
+        t = env3_0.read_temperature()
+        h = env3_0.read_humidity()
+        
+        # 数据前端渲染 (保留一位小数)
+        lbl_temp.setText("Temp: {:.1f} C".format(t))
+        lbl_hum.setText("Hum: {:.1f} %".format(h))
+        
+        # 核心逻辑：热射病干预阈值判定
+        if t > 32.0 or h > 75.0:
+            current_state = "DANGER"
+        else:
+            current_state = "SAFE"
+            
+        # 边缘触发状态机：避免 UI 闪烁
+        if current_state != last_state:
+            if current_state == "DANGER":
+                lbl_alert.setText("!! HEATSTROKE RISK !!")
+                lbl_alert.setColor(0xFF0000) # 强红色警报
+            else:
+                lbl_alert.setText("SYS: SAFE CLIMATE")
+                lbl_alert.setColor(0x00FF00) # 安全绿色
+                
+            last_state = current_state
+            
+    except Exception as e:
+        # 异常捕获机制：防止系统宕机
+        lbl_alert.setText("ERR: SENSOR OFFLINE")
+        lbl_alert.setColor(0xFFFF00)
+        
+    time.sleep_ms(1000) # 维持 1Hz 采样率
+
+if __name__ == '__main__':
+    try:
+        setup()
+        while True:
+            loop()
+    except (Exception, KeyboardInterrupt) as e:
+        try:
+            from utility import print_error_msg
+            print_error_msg(e)
+        except ImportError:
+            print("please update to latest firmware")
