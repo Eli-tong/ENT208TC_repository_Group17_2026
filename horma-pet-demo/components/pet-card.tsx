@@ -2,25 +2,17 @@ import type { CyclePhase, PetMood } from "@/lib/types";
 import { VirtualCat } from "@/components/virtual-cat";
 
 const moodLabel: Record<PetMood, string> = {
-  sick: "Under the weather",
-  tired: "Running on low power",
-  normal: "Steady and settled",
-  energetic: "Bright-eyed and bouncy",
+  sick: "Needing a little comfort",
+  tired: "Low on energy",
+  normal: "Steady and calm",
+  energetic: "Bright and playful",
 };
 
 const moodWhisper: Record<PetMood, string> = {
-  sick: "I’m tuckered out… could we take today gently?",
-  tired: "Everything’s a little heavy—snuggles help.",
-  normal: "I like this pace. Thanks for checking in.",
-  energetic: "I’m prancing! Want to share a silly moment?",
-};
-
-/** Short narrator line for the demo — clarifies the band without new logic. */
-const moodHint: Record<PetMood, string> = {
-  sick: "Low energy: they need softness and patience.",
-  tired: "Still low energy: small steps still move the needle.",
-  normal: "Mid range: things feel balanced.",
-  energetic: "High energy: they’re feeling strong and playful.",
+  sick: "Could we keep close and make today gentle?",
+  tired: "I’m cozy but quiet—little kindnesses help.",
+  normal: "This feels like us. I’m glad you’re here.",
+  energetic: "I’ve got a spring in my step—stay with me?",
 };
 
 const moodAccent: Record<PetMood, string> = {
@@ -34,14 +26,16 @@ type Props = {
   energy: number;
   mood: PetMood;
   phase: CyclePhase;
+  /** Short post-log visual (image only; logic unchanged). */
+  showSoothed?: boolean;
 };
 
-export function PetCard({ energy, mood, phase }: Props) {
+export function PetCard({ energy, mood, phase, showSoothed = false }: Props) {
   const pct = Math.min(100, Math.max(0, energy)) / 100;
 
   return (
     <section
-      className={`relative overflow-hidden rounded-3xl bg-gradient-to-br ${moodAccent[mood]} p-6 shadow-md ring-1 ring-white/60 transition-[background] duration-700 ease-out sm:p-8`}
+      className={`relative overflow-hidden rounded-2xl bg-gradient-to-br ${moodAccent[mood]} p-4 shadow-md ring-1 ring-white/60 transition-[background] duration-700 ease-out sm:p-5`}
       aria-labelledby="pet-card-title"
     >
       <div className="pointer-events-none absolute -right-8 -top-8 h-32 w-32 rounded-full bg-white/40 blur-2xl" />
@@ -51,31 +45,27 @@ export function PetCard({ energy, mood, phase }: Props) {
         <p id="pet-card-title" className="text-xs font-semibold uppercase tracking-wider text-stone-600/90">
           Your Horma cat
         </p>
-        <p className="mt-1 text-sm leading-relaxed text-stone-600">
-          A tiny companion who feels what you feed them—food, gentle movement, and care you show yourself.
+        <p className="mt-0.5 text-xs leading-snug text-stone-600 sm:text-[13px]">
+          Their look matches today’s rhythm and the care you log.
         </p>
 
-        <div className="mt-6 rounded-2xl bg-white/55 py-6 ring-1 ring-white/70 transition-shadow duration-500 sm:mt-7 sm:py-8">
-          <VirtualCat mood={mood} className="h-40 w-40 sm:h-48 sm:w-48" />
+        <div className="mt-4 rounded-xl bg-white/55 py-3 ring-1 ring-white/70 transition-shadow duration-500 sm:py-4">
+          <VirtualCat mood={mood} showSoothed={showSoothed} className="h-44 w-44 sm:h-52 sm:w-52" />
         </div>
 
-        <div className="mt-5 text-center sm:mt-6">
-          <p className="text-lg font-semibold tracking-tight text-stone-900 sm:text-xl">{moodLabel[mood]}</p>
-          <p className="mx-auto mt-2 max-w-[22rem] text-sm italic leading-relaxed text-stone-800">
+        <div className="mt-3 text-center sm:mt-4">
+          <p className="text-base font-semibold tracking-tight text-stone-900 sm:text-lg">{moodLabel[mood]}</p>
+          <p className="mx-auto mt-1.5 max-w-[20rem] text-sm italic leading-snug text-stone-800">
             “{moodWhisper[mood]}”
           </p>
-          <p className="mx-auto mt-3 max-w-[22rem] text-xs leading-relaxed text-stone-600">
-            {moodHint[mood]}
-          </p>
-          <p className="mt-3 text-sm text-stone-600">
-            Today’s cycle rhythm:{" "}
-            <span className="font-medium text-stone-800">{phase}</span>
+          <p className="mt-2 text-xs text-stone-600 sm:text-sm">
+            Cycle today: <span className="font-medium text-stone-800">{phase}</span>
           </p>
         </div>
 
-        <div className="mt-6 sm:mt-8">
+        <div className="mt-4">
           <div className="flex items-baseline justify-between text-sm text-stone-600">
-            <span>How bright they feel</span>
+            <span>Cat energy</span>
             <span className="font-tabular-nums font-medium text-stone-800">
               {energy}
               <span className="font-normal text-stone-500"> / 100</span>

@@ -1,29 +1,48 @@
 "use client";
 
-import { useAppState } from "@/hooks/use-app-state";
-import { energyForDay, last7Days, petMoodFromEnergy } from "@/lib/pet-logic";
+import { TrendsInsightsPanel } from "@/components/trends-insights";
 import { VirtualCat } from "@/components/virtual-cat";
-import type { DayLog, PetMood } from "@/lib/types";
+import { useAppState } from "@/hooks/use-app-state";
+import { buildTrendDays, buildTrendsInsights } from "@/lib/trends-insights";
+import { energyForDay, last7Days, petMoodFromEnergy } from "@/lib/pet-logic";
+import type { ActionEvent, DayLog, PetMood } from "@/lib/types";
 
 const demoPlan: Array<{
   phase: DayLog["phase"];
-  foodCount: number;
-  workoutCount: number;
+  actions: Array<Pick<ActionEvent, "type" | "label" | "delta">>;
 }> = [
-  // Oldest -> newest (7 days ending today). This intentionally starts lower
-  // and shows a gentle recovery as care actions increase.
-  { phase: "Menstrual", foodCount: 0, workoutCount: 0 }, // ~40 (tired)
-  { phase: "Menstrual", foodCount: 1, workoutCount: 0 }, // ~48 (tired)
-  { phase: "Luteal", foodCount: 1, workoutCount: 0 }, // ~63 (normal)
-  { phase: "Luteal", foodCount: 1, workoutCount: 1 }, // ~73 (normal)
-  { phase: "Follicular", foodCount: 0, workoutCount: 1 }, // ~70 (normal)
-  { phase: "Ovulation", foodCount: 1, workoutCount: 1 }, // ~98 (energetic)
-  { phase: "Ovulation", foodCount: 0, workoutCount: 0 }, // ~80 (energetic)
+  { phase: "Menstrual", actions: [{ type: "task", label: "Meetings / social", delta: -12 }] },
+  { phase: "Menstrual", actions: [{ type: "food", label: "Warm ginger tea", delta: 6 }] },
+  { phase: "Luteal", actions: [{ type: "food", label: "Berries", delta: 8 }] },
+  {
+    phase: "Luteal",
+    actions: [
+      { type: "workout", label: "Stretch + release", delta: 6 },
+      { type: "task", label: "Focus session (30 min)", delta: -10 },
+    ],
+  },
+  { phase: "Follicular", actions: [{ type: "workout", label: "Easy walk", delta: 8 }] },
+  {
+    phase: "Ovulation",
+    actions: [
+      { type: "food", label: "Omega-3 fish", delta: 10 },
+      { type: "workout", label: "Gentle yoga", delta: 10 },
+    ],
+  },
+  { phase: "Ovulation", actions: [{ type: "task", label: "House chore", delta: -8 }] },
 ];
 
 function demoLog(date: string, idx: number): DayLog {
   const item = demoPlan[idx] ?? demoPlan[demoPlan.length - 1];
-  return { date, ...item };
+  return {
+    date,
+    phase: item.phase,
+    actions: item.actions.map((action, actionIndex) => ({
+      id: `demo_${date}_${idx}_${actionIndex}`,
+      at: new Date().toISOString(),
+      ...action,
+    })),
+  };
 }
 
 const moodLabel: Record<PetMood, string> = {
@@ -40,52 +59,60 @@ const moodGlow: Record<PetMood, string> = {
   energetic: "from-emerald-200/60 via-teal-100/45 to-cyan-50/20",
 };
 
+function iconForAction(type: ActionEvent["type"]): string {
+  if (type === "food") return "🥗";
+  if (type === "workout") return "🧘";
+  if (type === "care") return "🐾";
+  return "⚡️";
+}
+
+function labelForDelta(delta: number): { text: string; cls: string } {
+  if (delta >= 0) return { text: `+${delta}`, cls: "text-emerald-700 bg-emerald-50 ring-emerald-200/70" };
+  return { text: `${delta}`, cls: "text-rose-700 bg-rose-50 ring-rose-200/70" };
+}
+
 export default function TrendsPage() {
   const { state } = useAppState();
 
   if (!state) {
     return (
       <div className="flex min-h-[40vh] flex-col items-center justify-center px-4 py-10 text-center">
-        <p className="text-sm font-medium text-stone-500">Finding your cat…</p>
+        <p className="text-sm font-medium text-stone-500">Finding your cat...</p>
       </div>
     );
   }
 
   const days = last7Days();
+  const trendDays = buildTrendDays({ days, stateLogs: state.logs, demoLog });
+  const insights = buildTrendsInsights(trendDays);
 
   return (
     <div className="space-y-8 pb-12">
       <div className="rounded-3xl bg-gradient-to-b from-rose-50/90 via-orange-50/35 to-amber-50/20 px-5 py-6 ring-1 ring-rose-100/50 sm:px-6 sm:py-7">
         <h1 className="text-2xl font-semibold tracking-tight text-stone-900 sm:text-[1.65rem]">
-          Your cat’s 7-day rhythm
+          Your cat's 7-day rhythm
         </h1>
         <p className="mt-3 text-sm leading-relaxed text-stone-600">
-          Each day is a simple story: cycle phase sets a baseline, then food and gentle movement add a small boost.
-          Over a week, you can see what helps your cat (and you) feel steadier.
+          Each day is a simple story: cycle phase sets a baseline, then food, comfort, movement, and tasks shape the
+          result. Over a week, you can see what helps your cat (and you) feel steadier.
         </p>
         <p className="mt-2 text-xs leading-relaxed text-stone-500">
-          Tip: if you haven’t logged anything yet, we show a sample week so the pattern is easy to demo.
+          Tip: if you haven't logged anything yet, we show a sample week so the pattern is easy to demo.
         </p>
       </div>
 
+      <TrendsInsightsPanel insights={insights} />
+
       <section className="flex flex-col gap-3">
-        {days.map((date, idx) => {
-          // If a day has no saved logs yet, we show a simple demo story so the
-          // trend always looks meaningful during a class presentation.
-          const log = state.logs[date] ?? demoLog(date, idx);
-          const energy = energyForDay(log);
+        {trendDays.map(({ date, log, energy }, idx) => {
           const mood = petMoodFromEnergy(energy);
           const pct = Math.min(100, Math.max(0, energy)) / 100;
+          const actions = (log.actions ?? []).slice().sort((a, b) => a.at.localeCompare(b.at));
 
           return (
-            <article
-              key={date}
-              className={`rounded-2xl border border-stone-200/90 bg-white/70 p-4 shadow-sm`}
-            >
+            <article key={date} className="rounded-2xl border border-stone-200/90 bg-white/70 p-4 shadow-sm">
               <div className="flex items-start gap-3">
-                <div
-                  className={`rounded-2xl bg-gradient-to-br ${moodGlow[mood]} p-2 ring-1 ring-white/60`}
-                >
+                <div className={`rounded-2xl bg-gradient-to-br ${moodGlow[mood]} p-2 ring-1 ring-white/60`}>
                   <VirtualCat mood={mood} className="h-24 w-24" />
                 </div>
 
@@ -99,11 +126,8 @@ export default function TrendsPage() {
                     <span>
                       Phase: <span className="font-medium text-stone-800">{log.phase}</span>
                     </span>
-                    <span>
-                      Care:{" "}
-                      <span className="font-medium text-stone-800">
-                        {log.foodCount} food, {log.workoutCount} workout
-                      </span>
+                    <span className="text-xs text-stone-500">
+                      {actions.length ? `${actions.length} events logged` : `No events logged${idx < 6 ? " (demo data)" : ""}`}
                     </span>
                   </div>
 
@@ -136,6 +160,38 @@ export default function TrendsPage() {
                         style={{ width: `${pct * 100}%` }}
                       />
                     </div>
+                  </div>
+
+                  <div className="mt-4 space-y-2">
+                    <p className="text-xs font-semibold uppercase tracking-wide text-stone-600">What happened</p>
+                    {actions.length === 0 ? (
+                      <p className="text-sm text-stone-500">No events yet-log a food, movement, task, or care action.</p>
+                    ) : (
+                      <ul className="space-y-2">
+                        {actions.slice(-4).map((action) => {
+                          const delta = labelForDelta(action.delta);
+                          return (
+                            <li
+                              key={action.id}
+                              className="flex items-start justify-between gap-3 rounded-xl bg-white/60 p-2 ring-1 ring-stone-200/70"
+                            >
+                              <div className="min-w-0">
+                                <p className="text-sm font-medium text-stone-800">
+                                  <span className="mr-2" aria-hidden>
+                                    {iconForAction(action.type)}
+                                  </span>
+                                  {action.label}
+                                </p>
+                                <p className="mt-0.5 text-xs text-stone-500">{action.type === "care" ? "care" : action.type}</p>
+                              </div>
+                              <span className={`shrink-0 rounded-full px-2 py-0.5 text-xs font-semibold ring-1 ${delta.cls}`}>
+                                {delta.text}
+                              </span>
+                            </li>
+                          );
+                        })}
+                      </ul>
+                    )}
                   </div>
                 </div>
               </div>

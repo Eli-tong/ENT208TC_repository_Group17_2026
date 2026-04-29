@@ -1,6 +1,6 @@
 import type { CyclePhase, DayLog, PetMood } from "./types";
 
-/** Baseline energy for the day before today's action boosts (build pack + prompt 2 alignment). */
+/** Baseline energy for the day before today's action boosts. */
 export function baselineEnergyForPhase(phase: CyclePhase): number {
   switch (phase) {
     case "Menstrual":
@@ -18,14 +18,15 @@ export function baselineEnergyForPhase(phase: CyclePhase): number {
   }
 }
 
-const FOOD_BOOST = 8;
-const WORKOUT_BOOST = 10;
 const MAX_ENERGY = 100;
+const MIN_ENERGY = 0;
 
 export function energyForDay(log: DayLog): number {
   const base = baselineEnergyForPhase(log.phase);
-  const raw = base + log.foodCount * FOOD_BOOST + log.workoutCount * WORKOUT_BOOST;
-  return Math.min(MAX_ENERGY, raw);
+  const legacyBoost = (log.foodCount ?? 0) * 8 + (log.workoutCount ?? 0) * 10;
+  const actionDelta = (log.actions ?? []).reduce((sum, action) => sum + (action.delta ?? 0), 0);
+  const raw = base + legacyBoost + actionDelta;
+  return Math.min(MAX_ENERGY, Math.max(MIN_ENERGY, Math.round(raw)));
 }
 
 export function petMoodFromEnergy(energy: number): PetMood {
@@ -35,8 +36,13 @@ export function petMoodFromEnergy(energy: number): PetMood {
   return "energetic";
 }
 
+function pad2(n: number): string {
+  return String(n).padStart(2, "0");
+}
+
+/** Local date avoids UTC day drift. */
 export function todayDateString(d = new Date()): string {
-  return d.toISOString().slice(0, 10);
+  return `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`;
 }
 
 /** Last 7 calendar days ending today, oldest first. */
@@ -45,7 +51,7 @@ export function last7Days(d = new Date()): string[] {
   for (let i = 6; i >= 0; i--) {
     const x = new Date(d);
     x.setDate(x.getDate() - i);
-    out.push(x.toISOString().slice(0, 10));
+    out.push(todayDateString(x));
   }
   return out;
 }
